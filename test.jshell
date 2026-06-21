@@ -1,0 +1,6 @@
+import org.web3j.crypto.*;
+import org.web3j.utils.*;
+Credentials c = Credentials.create("0xb0ef4128a59bb306e4209d6c4e4c742003f6a6c820eb32a4574c0c4bbe852b29");
+byte[] msg = Hash.sha3("test".getBytes());
+Sign.SignatureData sig = Sign.signMessage(msg, c.getEcKeyPair(), false);
+System.out.println("Success!");

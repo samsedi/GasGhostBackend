@@ -1,3 +1,42 @@
+server:
+  port: ${PORT:8080}
+
 spring:
-  application:
-    name: GasGhosts
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:h2:mem:relayerdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+
+relayer:
+  alchemy:
+    url: ${ALCHEMY_URL}
+  private:
+    key: ${RELAYER_PRIVATE_KEY}
+  forwarder:
+    address: "0x5D7fCE20f33543948208BBF68Ed6e999ACb3964e"
+  greeter:
+    address: "0x909e770eb1b6b02C3D93FB369eF9c0ac00DC5109"
+  chain:
+    id: 11155111
+  whitelisted-targets: "0x909e770eb1b6b02C3D93FB369eF9c0ac00DC5109"
+  whitelisted-methods: "0xa4136862" # e.g. setGreeting(string)
+  max-gas-price-gwei: 100
+  cors-origins: "*"
+  tx-bump-threshold-minutes: 2
+  rate-limit:
+    requests-per-minute: 20
+
+logging:
+  level:
+    com.Relayer: INFO
+    org.web3j: WARN
