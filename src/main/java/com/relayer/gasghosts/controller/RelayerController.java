@@ -40,7 +40,11 @@ public class RelayerController {
     @PostMapping("/relay")
     public ResponseEntity<RelayResponseDTO> relay(@RequestBody RelayRequestDTO dto, HttpServletRequest httpRequest) {
         
-        Bucket bucket = rateLimiterService.resolveBucket(httpRequest.getRemoteAddr());
+        String remoteAddr = httpRequest.getRemoteAddr();
+        if (remoteAddr == null) {
+            remoteAddr = "unknown-ip";
+        }
+        Bucket bucket = rateLimiterService.resolveBucket(remoteAddr);
         if (!bucket.tryConsume(1)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(RelayResponseDTO.builder()
@@ -64,13 +68,28 @@ public class RelayerController {
                             .build());
         }
 
+        BigInteger valueInt;
+        BigInteger nonceInt;
+        BigInteger deadlineInt;
+        try {
+            valueInt = new BigInteger(dto.getValue() != null && !dto.getValue().isBlank() ? dto.getValue().trim() : "0");
+            nonceInt = new BigInteger(dto.getNonce() != null && !dto.getNonce().isBlank() ? dto.getNonce().trim() : "0");
+            deadlineInt = new BigInteger(dto.getDeadline() != null && !dto.getDeadline().isBlank() ? dto.getDeadline().trim() : "0");
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest()
+                    .body(RelayResponseDTO.builder()
+                            .success(false)
+                            .message("Invalid numeric value for value, nonce, or deadline")
+                            .build());
+        }
+
         // Map DTO to internal domain model
         RelayRequest request = RelayRequest.builder()
                 .from(dto.getFrom())
                 .to(dto.getTo())
-                .value(new BigInteger(dto.getValue() != null ? dto.getValue() : "0"))
-                .nonce(new BigInteger(dto.getNonce() != null ? dto.getNonce() : "0"))
-                .deadline(new BigInteger(dto.getDeadline() != null ? dto.getDeadline() : "0"))
+                .value(valueInt)
+                .nonce(nonceInt)
+                .deadline(deadlineInt)
                 .data(dto.getData())
                 .signature(dto.getSignature())
                 .chainId(dto.getChainId())
